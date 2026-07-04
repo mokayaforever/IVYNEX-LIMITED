@@ -52,15 +52,23 @@ export function PackageCard({
   onSelect: () => void;
 }) {
   return (
-    <button type="button" className={`pkg-card${selected ? ' selected' : ''}`} onClick={onSelect}>
+    <button
+      type="button"
+      className={`pkg-card${selected ? ' selected' : ''}`}
+      onClick={onSelect}
+      aria-pressed={selected}
+    >
       <ArcsIcon tierIndex={index} total={total} />
       <div className="pkg-info">
         <div className="pkg-name">{pkg.name}</div>
         <div className="pkg-sub">{formatDuration(pkg.durationMins)} · unlimited data</div>
       </div>
-      <div className="pkg-price">
-        <span className="cur">KSh</span>
-        {pkg.price}
+      <div className="pkg-meta">
+        <div className="pkg-price">
+          <span className="cur">KSh</span>
+          {pkg.price}
+        </div>
+        <span className="pkg-hint">{selected ? 'Selected' : 'Tap to select'}</span>
       </div>
     </button>
   );

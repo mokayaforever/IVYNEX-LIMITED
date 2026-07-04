@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from 'react';
-import { BrandMark, BrandName } from '../components/Brand';
 import { PackageCard } from '../components/PackageCard';
 import { PaymentModal, type ModalState } from '../components/PaymentModal';
 import { SessionRing } from '../components/SessionRing';
