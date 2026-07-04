@@ -1,0 +1,25 @@
+# /etc/freeradius/3.0/clients.conf
+#
+# Add this block for your MikroTik router (the "NAS" in RADIUS terms).
+# Copy it into the existing clients.conf on your FreeRADIUS box — don't
+# replace the whole file, just append this client{} section.
+
+client mikrotik_hotspot {
+    # Replace with your router's LAN IP (the interface FreeRADIUS talks to)
+    ipaddr      = 192.168.88.1
+
+    # Must match the RADIUS secret configured on the MikroTik side:
+    #   /radius add service=hotspot address=<this-freeradius-ip> secret=<this-value>
+    secret      = change_this_shared_secret_to_something_long
+
+    shortname   = ivynex-mikrotik
+    nas_type    = other
+
+    # MikroTik ships its own RADIUS dictionary (Mikrotik-Rate-Limit,
+    # Mikrotik-Recv-Limit, etc.) — FreeRADIUS already includes
+    # dictionary.mikrotik by default via the main `dictionary` file, so no
+    # extra step is needed there.
+}
+
+# If you run more than one router (multiple sites), add one client{} block
+# per router, each with its own shortname and, ideally, its own secret.

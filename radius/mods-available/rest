@@ -1,0 +1,53 @@
+# /etc/freeradius/3.0/mods-available/rest
+#
+# Save this as mods-available/rest (it replaces/extends the default rest
+# module shipped with FreeRADIUS), then enable it with:
+#   ln -s ../mods-available/rest /etc/freeradius/3.0/mods-enabled/rest
+#
+# This is what actually connects FreeRADIUS to the IVYNEX WIFI LIMITED
+# backend: every hotspot login calls `authorize {}` below, and every
+# accounting packet (Start/Interim-Update/Stop) calls `accounting {}`.
+
+rest {
+    # Base URL of the Node/Express backend. Change to your real domain/IP
+    # in production (e.g. http://10.0.0.5:4000 on your internal network,
+    # or https://api.ivynexwifi.co.ke if it's reachable over the internet).
+    connect_uri = "http://127.0.0.1:4000"
+
+    connect_timeout = 4.0
+    tls {
+        # If PUBLIC_BASE_URL is https with a valid cert, no extra config
+        # needed here. For a self-signed cert during testing, uncomment:
+        # check_cert = no
+    }
+
+    # ---------- authorize{} : called on every hotspot login attempt ----------
+    authorize {
+        uri = "${..connect_uri}/api/radius/authorize"
+        method = 'post'
+        body = 'json'
+        data = '{"username": "%{User-Name}", "password": "%{User-Password}", "macAddress": "%{Calling-Station-Id}", "nasIpAddress": "%{NAS-IP-Address}"}'
+
+        # Must match RADIUS_REST_SHARED_SECRET in the backend's .env —
+        # this is what stops randoms on the internet from hitting your
+        # authorize/accounting endpoints directly.
+        header = "Content-Type: application/json"
+        header = "X-Radius-Secret: change_this_to_a_long_random_string"
+
+        # The backend replies with a flat JSON object using
+        # "<list>:<attribute>" keys, e.g. {"control:Auth-Type": "Accept",
+        # "reply:Session-Timeout": 2700}. FreeRADIUS's JSON body decoder
+        # maps those straight onto the request's attribute lists.
+    }
+
+    # ---------- accounting{} : called for Start / Interim-Update / Stop ----------
+    accounting {
+        uri = "${..connect_uri}/api/radius/accounting"
+        method = 'post'
+        body = 'json'
+        data = '{"username": "%{User-Name}", "acctStatusType": "%{Acct-Status-Type}", "acctSessionId": "%{Acct-Session-Id}", "nasIpAddress": "%{NAS-IP-Address}", "framedIpAddress": "%{Framed-IP-Address}", "inputOctets": "%{Acct-Input-Octets}", "outputOctets": "%{Acct-Output-Octets}"}'
+
+        header = "Content-Type: application/json"
+        header = "X-Radius-Secret: change_this_to_a_long_random_string"
+    }
+}

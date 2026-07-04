@@ -1,0 +1,58 @@
+# /etc/freeradius/3.0/sites-available/ivynex
+#
+# A minimal virtual server dedicated to the MikroTik hotspot, so it doesn't
+# get tangled up with whatever else the stock `default` site does (EAP,
+# local users, etc).
+#
+# Enable it with:
+#   ln -s ../sites-available/ivynex /etc/freeradius/3.0/sites-enabled/ivynex
+#
+# Then either point MikroTik at this server's listener port, or (simpler)
+# disable the stock `default` site and rename this to `default` if this
+# FreeRADIUS instance ONLY serves the IVYNEX hotspot:
+#   rm /etc/freeradius/3.0/sites-enabled/default
+#   ln -s ../sites-available/ivynex /etc/freeradius/3.0/sites-enabled/default
+
+server ivynex {
+    listen {
+        type = auth
+        ipaddr = *
+        port = 1812
+    }
+    listen {
+        type = acct
+        ipaddr = *
+        port = 1813
+    }
+
+    authorize {
+        # Calls POST /api/radius/authorize on the backend. The response is
+        # mapped straight onto control:Auth-Type (Accept/Reject) and, on
+        # Accept, reply:Session-Timeout — which short-circuits the rest of
+        # the authorize/authenticate chain, so no separate Auth-Type block
+        # is needed below.
+        rest
+    }
+
+    authenticate {
+        # Intentionally empty: Auth-Type is already resolved to Accept or
+        # Reject by the rest module above.
+    }
+
+    preacct {
+        preprocess
+        acct_unique
+    }
+
+    accounting {
+        rest
+    }
+
+    session {
+    }
+
+    post-auth {
+        # Nothing extra needed — Session-Timeout / Idle-Timeout reply
+        # attributes were already set by the rest module's authorize call.
+    }
+}
